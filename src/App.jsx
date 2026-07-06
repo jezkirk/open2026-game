@@ -2,89 +2,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "./supabase"
 import { GROUPS, ALL_GOLFERS, TOURNAMENT, isPicsLocked } from "./data"
 
-const S = {
-  root: { minHeight: "100vh", background: "#07080f", color: "#e2e8f0", fontFamily: "'Outfit', sans-serif", maxWidth: 600, margin: "0 auto", paddingBottom: 40 },
-  hero: { background: "linear-gradient(135deg, #0f1a0f 0%, #0a1a2e 50%, #1a0f0a 100%)", padding: "32px 24px 28px", textAlign: "center", borderBottom: "1px solid #1e293b" },
-  heroIcon: { fontSize: 48, marginBottom: 8, display: "block" },
-  title: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 44, lineHeight: 1.0, letterSpacing: 3, color: "#fff", margin: 0 },
-  titleAccent: { color: "#22c55e" },
-  subtitle: { marginTop: 8, color: "#64748b", fontSize: 13, letterSpacing: 2 },
-  pageTitle: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 34, lineHeight: 1.1, letterSpacing: 3, color: "#fff", margin: 0 },
-  section: { padding: "20px 20px 0" },
-  sectionTitle: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, color: "#22c55e", marginBottom: 12 },
-  card: { background: "#0d1117", border: "1px solid #1e293b", borderRadius: 10, padding: "14px 16px", marginBottom: 10 },
-  cardGreen: { border: "1px solid #22c55e44", background: "#0a1a0a" },
-  label: { display: "block", color: "#94a3b8", fontSize: 13, marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 },
-  input: { width: "100%", background: "#0f1624", border: "1px solid #1e293b", borderRadius: 8, color: "#fff", fontSize: 16, padding: "12px 14px", outline: "none", boxSizing: "border-box" },
-  btnPrimary: { background: "linear-gradient(135deg,#22c55e,#16a34a)", color: "#000", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, fontSize: 18, padding: "12px 32px", borderRadius: 8, border: "none", cursor: "pointer", width: "100%" },
-  btnSmall: { background: "transparent", color: "#64748b", border: "1px solid #1e293b", padding: "8px 20px", borderRadius: 6, fontSize: 13, cursor: "pointer" },
-  badge: { background: "#1e293b", color: "#94a3b8", fontSize: 10, padding: "2px 6px", borderRadius: 4, textTransform: "uppercase", letterSpacing: 0.5 },
-  badgeGreen: { background: "#1a3a1a", color: "#4ade80", fontSize: 10, padding: "2px 6px", borderRadius: 4 },
-  badgeAmber: { background: "#3a2a00", color: "#f59e0b", fontSize: 10, padding: "2px 6px", borderRadius: 4 },
-  toast: { position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "#1a3a1a", color: "#4ade80", border: "1px solid #22c55e44", padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, zIndex: 999, whiteSpace: "nowrap", pointerEvents: "none" },
-  spinner: { display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#07080f", color: "#fff", fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 4 },
-  lbRow: { background: "#0d1117", border: "1px solid #1e293b", borderRadius: 10, padding: "12px 14px", marginBottom: 8 },
-  lbRowTop: { background: "linear-gradient(135deg,#1a1200,#0a0a0a)", border: "1px solid #f59e0b77" },
-  lbName: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 1, color: "#fff" },
-  lbScore: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: "#22c55e" },
-  lbPicks: { marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6 },
-  lbGolfer: { fontSize: 12, color: "#94a3b8", background: "#1e293b", padding: "3px 8px", borderRadius: 4 },
-  lbGolferScore: { color: "#e2e8f0", fontWeight: 600 },
-  lbGolferCut: { color: "#f87171", textDecoration: "line-through", opacity: 0.6 },
-  groupCard: { background: "#0d1117", border: "1px solid #1e293b", borderRadius: 10, marginBottom: 12, overflow: "hidden" },
-  groupHeader: { background: "#1e293b", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" },
-  groupName: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 1, color: "#94a3b8" },
-  groupPicked: { fontSize: 12, color: "#22c55e", fontWeight: 600 },
-  golferRow: { display: "flex", alignItems: "center", padding: "10px 14px", borderBottom: "1px solid #1e293b", cursor: "pointer" },
-  golferRowSelected: { background: "#0a1a0a" },
-  golferRadio: { width: 18, height: 18, borderRadius: "50%", border: "2px solid #334155", marginRight: 12, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" },
-  golferRadioSelected: { border: "2px solid #22c55e", background: "#22c55e" },
-  golferName: { fontSize: 14, color: "#e2e8f0", flex: 1 },
-  golferNameSelected: { color: "#4ade80", fontWeight: 600 },
-  roundTabs: { display: "flex", gap: 6, padding: "14px 20px 8px", overflowX: "auto" },
-  roundTab: { padding: "6px 14px", borderRadius: 20, border: "1px solid #1e293b", background: "#0f1624", color: "#64748b", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" },
-  roundTabActive: { background: "#1e3a1e", border: "1px solid #22c55e", color: "#4ade80" },
-  rulesBox: { background: "#0d1117", border: "1px solid #22c55e33", borderRadius: 10, padding: 16, marginTop: 16 },
-  rulesTitle: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 2, color: "#22c55e", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 },
-  ruleRow: { fontSize: 13, color: "#64748b", marginBottom: 8, lineHeight: 1.6 },
-}
-
-function GS() {
-  return (
-    <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap');
-      *{box-sizing:border-box;margin:0;padding:0}
-      body{background:#07080f}
-      ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:#333}
-    `}</style>
-  )
-}
-
-function Toast({ msg }) {
-  if (!msg) return null
-  return <div style={S.toast}>{msg}</div>
-}
-
-async function loadAllPlayers() {
-  const { data } = await supabase.from("open_players").select("*")
-  return data || []
-}
-
-async function savePlayer(name, picks) {
-  await supabase.from("open_players").upsert(
-    { name, picks: JSON.stringify(picks), updated_at: new Date().toISOString() },
-    { onConflict: "name" }
-  )
-}
-
-async function loadScores() {
-  const { data } = await supabase.from("golf_scores").select("*")
-  const map = {}
-  if (data) data.forEach(r => { map[r.golfer_name] = r })
-  return map
-}
-
-const PAR = 70 // Royal Birkdale par 70
+const PAR = 70
 
 function formatVsPar(n) {
   if (n === null || n === undefined) return "–"
@@ -93,33 +11,10 @@ function formatVsPar(n) {
 }
 
 function golferVsPar(score) {
-  // Returns total vs par for completed rounds only
   if (!score) return null
   const rounds = [score.r1, score.r2, score.r3, score.r4].filter(r => r != null)
   if (rounds.length === 0) return null
   return rounds.reduce((a, b) => a + b, 0) - (PAR * rounds.length)
-}
-
-function golferRoundVsPar(score, round) {
-  if (!score) return null
-  const r = score[`r${round}`]
-  if (r == null) return null
-  return r - PAR
-}
-
-// Cut penalty: worst vs-par total among all picked golfers who made the cut
-function getWorstVsPar(allPlayers, scores) {
-  let worst = null
-  allPlayers.forEach(p => {
-    const picks = JSON.parse(p.picks || "[]")
-    picks.forEach(name => {
-      const s = scores[name]
-      if (!s || !s.made_cut) return
-      const vp = golferVsPar(s)
-      if (vp != null && (worst === null || vp > worst)) worst = vp
-    })
-  })
-  return worst
 }
 
 function getWorstRoundVsPar(allPlayers, scores, round) {
@@ -149,15 +44,12 @@ function playerTotalVsPar(picks, scores, allPlayers) {
     const completedRounds = [s.r1, s.r2, s.r3, s.r4].filter(r => r != null).length
     if (completedRounds === 0) return
     if (total === null) total = 0
-    // R1 and R2 always use actual score
     if (s.r1 != null) total += (s.r1 - PAR)
     if (completedRounds >= 2 && s.r2 != null) total += (s.r2 - PAR)
-    // R3: use actual if made cut, else worst
     if (completedRounds >= 3) {
       if (!s.made_cut && worstR3vp !== null) total += worstR3vp
       else if (s.r3 != null) total += (s.r3 - PAR)
     }
-    // R4: use actual if made cut, else worst
     if (completedRounds >= 4) {
       if (!s.made_cut && worstR4vp !== null) total += worstR4vp
       else if (s.r4 != null) total += (s.r4 - PAR)
@@ -166,9 +58,109 @@ function playerTotalVsPar(picks, scores, allPlayers) {
   return total
 }
 
+// ─── STYLES ───────────────────────────────────────────────────────────────────
+const S = {
+  root: { minHeight: "100vh", background: "#07140a", color: "#e2e8f0", fontFamily: "'Outfit', sans-serif", maxWidth: 600, margin: "0 auto", paddingBottom: 40 },
+  hero: { background: "linear-gradient(135deg, #0f241a 0%, #102a16 50%, #0a1f10 100%)", padding: "32px 24px 28px", textAlign: "center", borderBottom: "1px solid #1e3a2a" },
+  heroIcon: { fontSize: 48, marginBottom: 8, display: "block" },
+  title: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 46, lineHeight: 1.0, letterSpacing: 4, color: "#fff", margin: 0 },
+  titleAccent: { color: "#4ade80" },
+  subtitle: { marginTop: 8, color: "#86a08f", fontSize: 13, letterSpacing: 2 },
+  pageTitle: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 34, lineHeight: 1.1, letterSpacing: 3, color: "#fff", margin: 0 },
+  section: { padding: "20px 20px 0" },
+  sectionTitle: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, color: "#4ade80", marginBottom: 4 },
+  sectionSub: { fontSize: 13, color: "#86a08f", marginBottom: 12 },
+  navTabs: { display: "flex", gap: 6, padding: "14px 20px 8px", overflowX: "auto" },
+  navTab: { padding: "6px 14px", borderRadius: 20, border: "1px solid #1e3a2a", background: "#0f241a", color: "#86a08f", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" },
+  navTabActive: { background: "#14532d", border: "1px solid #4ade80", color: "#86efac" },
+  leaderRow: { background: "#0d1a12", border: "1px solid #1e3a2a", borderRadius: 10, padding: "14px 16px", marginBottom: 10 },
+  leaderRowLead: { background: "linear-gradient(135deg,#1a2e00,#0a1500)", border: "1px solid #4ade8077" },
+  leaderTop: { display: "flex", alignItems: "center", gap: 12, marginBottom: 10 },
+  rankBadge: { width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, background: "#1e293b", color: "#94a3b8", flexShrink: 0 },
+  rankBadgeLead: { background: "#4ade80", color: "#052e16" },
+  playerName: { flex: 1, fontSize: 16, fontWeight: 700, color: "#e2e8f0" },
+  totalScore: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: "#4ade80" },
+  totalScoreOver: { color: "#f87171" },
+  totalScoreE: { color: "#94a3b8" },
+  totalLabel: { fontSize: 10, color: "#64748b", textTransform: "uppercase", letterSpacing: 1, textAlign: "right" },
+  golferLine: { display: "flex", alignItems: "center", gap: 6, paddingTop: 4, paddingBottom: 4, borderTop: "1px solid #1e3a2a", fontSize: 12 },
+  golferLineName: { flex: 1, color: "#94a3b8" },
+  golferLineScore: { fontWeight: 700, color: "#4ade80", minWidth: 28, textAlign: "right" },
+  golferLineScoreOver: { color: "#f87171" },
+  golferLineScoreE: { color: "#64748b" },
+  golferLineCut: { color: "#f87171", textDecoration: "line-through", opacity: 0.7 },
+  cutBadge: { fontSize: 10, color: "#f87171", marginLeft: 4 },
+  allGolferRow: { display: "flex", alignItems: "center", background: "#0d1a12", border: "1px solid #1e3a2a", borderRadius: 8, padding: "10px 14px", marginBottom: 6 },
+  allGolferName: { flex: 1, fontSize: 13, fontWeight: 600 },
+  allGolferRound: { fontSize: 12, minWidth: 28, textAlign: "center" },
+  allGolferTotal: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, minWidth: 36, textAlign: "right" },
+  card: { background: "#0d1a12", border: "1px solid #1e3a2a", borderRadius: 10, padding: "14px 16px", marginBottom: 10 },
+  input: { width: "100%", background: "#0f241a", border: "1px solid #1e3a2a", borderRadius: 8, color: "#fff", fontSize: 16, padding: "12px 14px", outline: "none", boxSizing: "border-box" },
+  label: { display: "block", color: "#86a08f", fontSize: 13, marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 },
+  btnPrimary: { background: "linear-gradient(135deg,#4ade80,#16a34a)", color: "#052e16", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, fontSize: 18, padding: "12px 32px", borderRadius: 8, border: "none", cursor: "pointer", width: "100%" },
+  btnSmall: { background: "transparent", color: "#86a08f", border: "1px solid #1e3a2a", padding: "8px 20px", borderRadius: 6, fontSize: 13, cursor: "pointer" },
+  groupCard: { background: "#0d1a12", border: "1px solid #1e3a2a", borderRadius: 10, marginBottom: 12, overflow: "hidden" },
+  groupHeader: { background: "#1e3a2a", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  groupName: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, letterSpacing: 1, color: "#86a08f" },
+  groupPicked: { fontSize: 12, color: "#4ade80", fontWeight: 600 },
+  golferRow: { display: "flex", alignItems: "center", padding: "10px 14px", cursor: "pointer" },
+  golferRowSelected: { background: "#0a1a0a" },
+  golferRadio: { width: 18, height: 18, borderRadius: "50%", border: "2px solid #334155", marginRight: 12, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" },
+  golferRadioSelected: { border: "2px solid #4ade80", background: "#4ade80" },
+  golferName: { fontSize: 14, color: "#e2e8f0", flex: 1 },
+  golferNameSelected: { color: "#4ade80", fontWeight: 600 },
+  infoBox: { background: "#0d1a12", border: "1px solid #4ade8033", borderRadius: 10, padding: 16, marginTop: 16 },
+  infoTitle: { fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 2, color: "#4ade80", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 },
+  infoRow: { fontSize: 13, color: "#86a08f", marginBottom: 8, lineHeight: 1.6 },
+  toast: { position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "#1a3a1a", color: "#4ade80", border: "1px solid #22c55e44", padding: "10px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, zIndex: 999, whiteSpace: "nowrap", pointerEvents: "none" },
+  spinner: { display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#07140a", color: "#fff", fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 4 },
+}
+
+function GS() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap');
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{background:#07140a}
+      ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:#333}
+    `}</style>
+  )
+}
+
+function Toast({ msg }) {
+  if (!msg) return null
+  return <div style={S.toast}>{msg}</div>
+}
+
+function scoreColor(vp) {
+  if (vp === null || vp === undefined) return "#334155"
+  if (vp < 0) return "#4ade80"
+  if (vp > 0) return "#f87171"
+  return "#64748b"
+}
+
+async function loadAllPlayers() {
+  const { data } = await supabase.from("open_players").select("*")
+  return data || []
+}
+
+async function savePlayer(name, picks) {
+  await supabase.from("open_players").upsert(
+    { name, picks: JSON.stringify(picks), updated_at: new Date().toISOString() },
+    { onConflict: "name" }
+  )
+}
+
+async function loadScores() {
+  const { data } = await supabase.from("golf_scores").select("*")
+  const map = {}
+  if (data) data.forEach(r => { map[r.golfer_name] = r })
+  return map
+}
+
 export default function App() {
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState("home")
+  const [tab, setTab] = useState("leaderboard") // leaderboard | allgolfers | mypicks | register | picks
   const [myName, setMyName] = useState("")
   const [myPicks, setMyPicks] = useState({})
   const [allPlayers, setAllPlayers] = useState([])
@@ -176,7 +168,6 @@ export default function App() {
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState("")
   const [toast, setToast] = useState("")
-  const [activeRound, setActiveRound] = useState(0)
   const [nameInput, setNameInput] = useState("")
   const locked = isPicsLocked()
 
@@ -192,7 +183,7 @@ export default function App() {
     async function init() {
       await refresh()
       const saved = localStorage.getItem("open2026_name")
-      if (saved) { setMyName(saved); setView("home") }
+      if (saved) setMyName(saved)
       setLoading(false)
     }
     init()
@@ -221,7 +212,7 @@ export default function App() {
     setMyName(name)
     await refresh()
     showToast("Picks saved! Good luck! 🏌️")
-    setView("home")
+    setTab("leaderboard")
   }
 
   async function handleUpdatePicks() {
@@ -231,7 +222,7 @@ export default function App() {
     await savePlayer(myName, picksArray)
     await refresh()
     showToast("Picks updated! ✓")
-    setView("home")
+    setTab("leaderboard")
   }
 
   function openPicksScreen() {
@@ -242,7 +233,7 @@ export default function App() {
       GROUPS.forEach((g, i) => { if (picks[i]) pickMap[g.id] = picks[i] })
       setMyPicks(pickMap)
     }
-    setView("picks")
+    setTab("picks")
   }
 
   const leaderboard = allPlayers
@@ -258,11 +249,20 @@ export default function App() {
       return a.total - b.total
     })
 
+  const allGolfersSorted = ALL_GOLFERS
+    .map(name => ({ name, score: scores[name], total: golferVsPar(scores[name]), madeCut: scores[name]?.made_cut ?? null }))
+    .sort((a, b) => {
+      if (a.total === null && b.total === null) return 0
+      if (a.total === null) return 1
+      if (b.total === null) return -1
+      return a.total - b.total
+    })
+
   if (loading) return <><GS /><div style={S.spinner}>LOADING…</div></>
 
-  // ── REGISTER / PICKS SCREEN ──
-  if (view === "register" || view === "picks") {
-    const isEditing = view === "picks"
+  // ── REGISTER ──
+  if (tab === "register" || tab === "picks") {
+    const isEditing = tab === "picks"
     return (
       <div style={S.root}>
         <GS />
@@ -278,7 +278,7 @@ export default function App() {
               <input style={S.input} value={nameInput} onChange={e => setNameInput(e.target.value)} placeholder="e.g. Jiz" />
             </div>
           )}
-          <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16 }}>Pick one golfer from each group. Picks lock on July 16 at 6am BST.</p>
+          <p style={{ fontSize: 13, color: "#86a08f", marginBottom: 16 }}>Pick one golfer from each group. Picks lock on July 16 at 6am BST.</p>
           {GROUPS.map(group => (
             <div key={group.id} style={S.groupCard}>
               <div style={S.groupHeader}>
@@ -289,10 +289,10 @@ export default function App() {
                 const selected = myPicks[group.id] === golfer
                 return (
                   <div key={golfer}
-                    style={{ ...S.golferRow, ...(selected ? S.golferRowSelected : {}), borderBottom: idx === group.golfers.length - 1 ? "none" : "1px solid #1e293b" }}
+                    style={{ ...S.golferRow, ...(selected ? S.golferRowSelected : {}), borderBottom: idx === group.golfers.length - 1 ? "none" : "1px solid #1e3a2a" }}
                     onClick={() => !locked && setMyPicks(prev => ({ ...prev, [group.id]: golfer }))}>
                     <div style={{ ...S.golferRadio, ...(selected ? S.golferRadioSelected : {}) }}>
-                      {selected && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff" }} />}
+                      {selected && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#052e16" }} />}
                     </div>
                     <span style={{ ...S.golferName, ...(selected ? S.golferNameSelected : {}) }}>{golfer}</span>
                   </div>
@@ -308,7 +308,7 @@ export default function App() {
           )}
           {locked && <div style={{ ...S.card, textAlign: "center", color: "#f59e0b", marginTop: 8 }}>🔒 Picks are locked — tournament has started!</div>}
           <div style={{ textAlign: "center", marginTop: 12 }}>
-            <button style={S.btnSmall} onClick={() => setView("home")}>← Back</button>
+            <button style={S.btnSmall} onClick={() => setTab("leaderboard")}>← Back</button>
           </div>
         </div>
         <Toast msg={toast} />
@@ -316,131 +316,7 @@ export default function App() {
     )
   }
 
-  // ── LEADERBOARD ──
-  if (view === "leaderboard") {
-    const rounds = [1, 2, 3, 4]
-    // All golfers sorted by total strokes
-    const allGolfersSorted = ALL_GOLFERS
-      .map(name => ({ name, score: scores[name] }))
-      .map(({ name, score }) => ({ name, score, total: golferTotalStrokes(score), madeCut: score?.made_cut ?? null }))
-      .sort((a, b) => {
-        if (a.total === null && b.total === null) return 0
-        if (a.total === null) return 1
-        if (b.total === null) return -1
-        return a.total - b.total
-      })
-
-    return (
-      <div style={S.root}>
-        <GS />
-        <div style={S.hero}>
-          <span style={S.heroIcon}>🏆</span>
-          <h2 style={S.pageTitle}>LEADERBOARD</h2>
-          <p style={S.subtitle}>{TOURNAMENT.venue} · {TOURNAMENT.dates}</p>
-        </div>
-
-        <div style={S.roundTabs}>
-          <button style={{ ...S.roundTab, ...(activeRound === 0 ? S.roundTabActive : {}) }} onClick={() => setActiveRound(0)}>Total</button>
-          {rounds.map(r => (
-            <button key={r} style={{ ...S.roundTab, ...(activeRound === r ? S.roundTabActive : {}) }} onClick={() => setActiveRound(r)}>Round {r}</button>
-          ))}
-          <button style={{ ...S.roundTab, ...(activeRound === 99 ? S.roundTabActive : {}) }} onClick={() => setActiveRound(99)}>All Golfers</button>
-        </div>
-
-        <div style={{ padding: "0 20px" }}>
-          {activeRound === 99 ? (
-            // All golfers scoreboard
-            <>
-              <div style={{ ...S.sectionTitle, paddingTop: 12 }}>All Golfers</div>
-              {allGolfersSorted.map((g, i) => (
-                <div key={g.name} style={{ ...S.card, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 11, color: "#64748b", minWidth: 20 }}>#{i + 1}</span>
-                    <span style={{ fontSize: 14, color: g.madeCut === false ? "#f87171" : "#e2e8f0", textDecoration: g.madeCut === false ? "line-through" : "none", fontWeight: 600 }}>{g.name}</span>
-                    {g.madeCut === false && <span style={{ fontSize: 10, color: "#f87171", background: "#3a1a1a", padding: "1px 5px", borderRadius: 3 }}>CUT</span>}
-                  </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    {[1,2,3,4].map(r => {
-                      const rs = g.score ? g.score[`r${r}`] : null
-                      const vp = rs != null ? rs - PAR : null
-                      return <span key={r} style={{ fontSize: 12, color: vp != null ? (vp < 0 ? "#4ade80" : vp > 0 ? "#f87171" : "#94a3b8") : "#334155", minWidth: 22, textAlign: "center" }}>{vp != null ? formatVsPar(vp) : "–"}</span>
-                    })}
-                    <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: g.total != null ? (g.total < 0 ? "#22c55e" : g.total > 0 ? "#f87171" : "#94a3b8") : "#334155", minWidth: 32, textAlign: "right" }}>{g.total != null ? formatVsPar(g.total) : "–"}</span>
-                  </div>
-                </div>
-              ))}
-            </>
-          ) : (
-            // Player leaderboard
-            <>
-              {leaderboard.length === 0 && <div style={{ ...S.card, textAlign: "center", color: "#64748b", padding: 32 }}>No players registered yet</div>}
-              {leaderboard.map((player, i) => (
-                <div key={player.name} style={{ ...S.lbRow, ...(i === 0 && player.total > 0 ? S.lbRowTop : {}), ...(player.name === myName ? { border: "1px solid #2563eb44" } : {}) }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div>
-                      <span style={{ fontSize: 11, color: "#64748b", marginRight: 8 }}>#{i + 1}</span>
-                      <span style={{ ...S.lbName, ...(i === 0 && player.total > 0 ? { color: "#f59e0b" } : {}), ...(player.name === myName ? { color: "#93c5fd" } : {}) }}>
-                        {player.name} {player.name === myName ? "👤" : ""}
-                      </span>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <span style={S.lbScore}>
-                        {activeRound === 0
-                          ? (player.total !== null ? formatVsPar(player.total) : "–")
-                          : (() => {
-                              let sum = 0; let any = false
-                              player.picks.forEach(name => {
-                                const s = scores[name]
-                                if (!s) return
-                                const r = s[`r${activeRound}`]
-                                if (r != null) { sum += r - PAR; any = true }
-                              })
-                              return any ? formatVsPar(sum) : "–"
-                            })()}
-                      </span>
-                      <div style={{ fontSize: 10, color: "#64748b" }}>{activeRound === 0 ? "total" : `round ${activeRound}`}</div>
-                    </div>
-                  </div>
-                  {/* Golfer breakdown */}
-                  <div style={S.lbPicks}>
-                    {player.picks.map(name => {
-                      const s = scores[name]
-                      const total = golferVsPar(s)
-                      const cut = s && !s.made_cut
-                      const roundScore = activeRound > 0 && s ? s[`r${activeRound}`] : null
-                      return (
-                        <span key={name} style={{ ...S.lbGolfer, ...(cut ? { color: "#f87171", opacity: 0.7 } : {}) }}>
-                          <span style={{ textDecoration: cut ? "line-through" : "none" }}>{name.split(" ").pop()}</span>
-                          {activeRound === 0 && total != null && !cut && <span style={S.lbGolferScore}> {formatVsPar(total)}</span>}
-                          {activeRound > 0 && roundScore != null && <span style={S.lbGolferScore}> {formatVsPar(roundScore - PAR)}</span>}
-                          {cut && <span style={{ color: "#f87171", fontSize: 10 }}> ✂</span>}
-                        </span>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-
-        <div style={{ padding: "16px 20px 0", display: "flex", gap: 8, justifyContent: "center" }}>
-          <button style={S.btnSmall} onClick={() => setView("home")}>← Back</button>
-          <button style={{ ...S.btnSmall, borderColor: syncing ? "#334155" : "#22c55e44", color: syncing ? "#475569" : "#4ade80" }}
-            onClick={handleSync} disabled={syncing}>
-            {syncing ? "⏳ Syncing…" : "🔄 Sync Scores"}
-          </button>
-        </div>
-        {syncMsg && <div style={{ textAlign: "center", fontSize: 12, color: "#4ade80", marginTop: 8 }}>{syncMsg}</div>}
-        <Toast msg={toast} />
-      </div>
-    )
-  }
-
-  // ── HOME ──
-  const myPlayerData = allPlayers.find(p => p.name === myName)
-  const myPicksArray = myPlayerData ? JSON.parse(myPlayerData.picks || "[]") : []
-
+  // ── MAIN APP ──
   return (
     <div style={S.root}>
       <GS />
@@ -450,90 +326,155 @@ export default function App() {
         <p style={S.subtitle}>ROYAL BIRKDALE · JULY 16–19</p>
       </div>
 
-      {!myName ? (
-        <div style={{ ...S.section, maxWidth: 400, margin: "0 auto", paddingTop: 32 }}>
-          <p style={{ color: "#94a3b8", fontSize: 15, textAlign: "center", marginBottom: 24 }}>Enter your name and pick one golfer from each group to join the game.</p>
-          <button style={S.btnPrimary} onClick={() => setView("register")}>🏌️ Register & Pick Golfers</button>
-          <div style={{ marginTop: 12, textAlign: "center" }}>
-            <button style={S.btnSmall} onClick={() => setView("leaderboard")}>View Leaderboard</button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* My picks */}
-          <div style={S.section}>
-            <div style={S.sectionTitle}>My Picks — {myName}</div>
-            <div style={{ ...S.card, ...S.cardGreen }}>
-              {myPicksArray.length === 0 ? (
-                <p style={{ color: "#64748b", fontSize: 13 }}>No picks saved yet.</p>
-              ) : (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {myPicksArray.map((name, i) => {
-                    const s = scores[name]
-                    const total = golferVsPar(s)
-                    const cut = s && !s.made_cut
-                    return (
-                      <div key={name} style={{ background: "#1e293b", borderRadius: 6, padding: "6px 10px", fontSize: 13 }}>
-                        <span style={{ color: "#64748b", fontSize: 10 }}>G{i + 1} </span>
-                        <span style={{ color: cut ? "#f87171" : "#e2e8f0", fontWeight: 600, textDecoration: cut ? "line-through" : "none" }}>{name}</span>
-                        {total != null && !cut && <span style={{ color: "#4ade80", marginLeft: 6, fontWeight: 700 }}>{formatVsPar(total)}</span>}
-                        {cut && <span style={{ color: "#f87171", marginLeft: 4, fontSize: 10 }}>CUT</span>}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Nav tabs */}
+      <div style={S.navTabs}>
+        <button style={{ ...S.navTab, ...(tab === "leaderboard" ? S.navTabActive : {}) }} onClick={() => setTab("leaderboard")}>🏆 Leaderboard</button>
+        <button style={{ ...S.navTab, ...(tab === "allgolfers" ? S.navTabActive : {}) }} onClick={() => setTab("allgolfers")}>⛳ All Golfers</button>
+        {myName
+          ? <button style={{ ...S.navTab, ...(tab === "mypicks" ? S.navTabActive : {}) }} onClick={() => setTab("mypicks")}>👤 {myName}</button>
+          : <button style={{ ...S.navTab, ...(tab === "register" ? S.navTabActive : {}) }} onClick={() => setTab("register")}>✏️ Register</button>
+        }
+      </div>
 
-          {/* Top 3 preview */}
-          {leaderboard.length > 0 && (
-            <div style={S.section}>
-              <div style={S.sectionTitle}>Leaderboard</div>
-              {leaderboard.slice(0, 3).map((player, i) => (
-                <div key={player.name} style={{ ...S.card, display: "flex", justifyContent: "space-between", alignItems: "center", ...(player.name === myName ? { border: "1px solid #2563eb44" } : {}) }}>
-                  <div>
-                    <span style={{ fontSize: 11, color: "#64748b", marginRight: 8 }}>#{i + 1}</span>
-                    <span style={{ fontWeight: 600, color: i === 0 && player.total > 0 ? "#f59e0b" : "#e2e8f0" }}>
-                      {player.name} {player.name === myName ? "👤" : ""}
-                    </span>
+      <div style={{ padding: "0 20px" }}>
+
+        {/* ── LEADERBOARD TAB ── */}
+        {tab === "leaderboard" && (
+          <>
+            <div style={{ ...S.sectionTitle, paddingTop: 12 }}>🏆 LEADERBOARD</div>
+            <div style={S.sectionSub}>Lowest score vs par wins</div>
+            {leaderboard.length === 0 && (
+              <div style={{ ...S.card, textAlign: "center", color: "#64748b", padding: 32 }}>
+                No players registered yet — be the first!
+              </div>
+            )}
+            {leaderboard.map((player, i) => (
+              <div key={player.name} style={{ ...S.leaderRow, ...(i === 0 && player.total !== null ? S.leaderRowLead : {}) }}>
+                <div style={S.leaderTop}>
+                  <div style={{ ...S.rankBadge, ...(i === 0 && player.total !== null ? S.rankBadgeLead : {}) }}>{i + 1}</div>
+                  <div style={S.playerName}>{player.name} {player.name === myName ? "👤" : ""}</div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ ...S.totalScore, color: scoreColor(player.total) }}>{player.total !== null ? formatVsPar(player.total) : "–"}</div>
+                    <div style={S.totalLabel}>total</div>
                   </div>
-                  <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: "#22c55e" }}>
-  {player.total !== null ? formatVsPar(player.total) : "–"}
-                  </span>
                 </div>
-              ))}
-            </div>
-          )}
+                {player.picks.map(name => {
+                  const s = scores[name]
+                  const vp = golferVsPar(s)
+                  const cut = s && !s.made_cut
+                  return (
+                    <div key={name} style={S.golferLine}>
+                      <span style={{ ...S.golferLineName, ...(cut ? S.golferLineCut : {}) }}>{name}</span>
+                      {cut && <span style={S.cutBadge}>✂ CUT</span>}
+                      <span style={{ ...S.golferLineScore, color: scoreColor(vp) }}>{vp !== null ? formatVsPar(vp) : "–"}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
 
-          {/* Actions */}
-          <div style={{ ...S.section, paddingTop: 16 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <button style={S.btnPrimary} onClick={() => setView("leaderboard")}>🏆 Full Leaderboard</button>
-              {!locked && <button style={{ ...S.btnSmall, width: "100%", borderColor: "#22c55e44", color: "#4ade80" }} onClick={openPicksScreen}>✏️ Edit My Picks</button>}
-              <button style={{ ...S.btnSmall, width: "100%", borderColor: "#22c55e44", color: "#4ade80" }} onClick={() => { setMyName(""); localStorage.removeItem("open2026_name") }}>🔄 Switch Player</button>
-            </div>
-            <div style={{ marginTop: 12, textAlign: "center" }}>
-              <button style={{ ...S.btnSmall, borderColor: syncing ? "#334155" : "#22c55e44", color: syncing ? "#475569" : "#4ade80" }}
+            {/* Sync button */}
+            <div style={{ textAlign: "center", marginTop: 8, paddingBottom: 16 }}>
+              <button style={{ ...S.btnSmall, borderColor: syncing ? "#334155" : "#4ade8044", color: syncing ? "#475569" : "#4ade80" }}
                 onClick={handleSync} disabled={syncing}>
                 {syncing ? "⏳ Syncing…" : "🔄 Sync Scores"}
               </button>
             </div>
-            {syncMsg && <div style={{ textAlign: "center", fontSize: 12, color: "#4ade80", marginTop: 8 }}>{syncMsg}</div>}
-          </div>
+            {syncMsg && <div style={{ textAlign: "center", fontSize: 12, color: "#4ade80", marginBottom: 12 }}>{syncMsg}</div>}
 
-          {/* Scoring rules */}
-          <div style={{ padding: "0 20px" }}>
-            <div style={S.rulesBox}>
-              <div style={S.rulesTitle}>📐 HOW SCORING WORKS</div>
-              <div style={S.ruleRow}>Each player picks 1 golfer from each of the 5 groups (based on betting odds tiers).</div>
-              <div style={S.ruleRow}>Your score = the sum of all 5 golfers' scores vs par (Royal Birkdale par 70).</div>
-              <div style={S.ruleRow}>Lowest score wins — most under par wins!</div>
-              <div style={S.ruleRow}>If one of your golfers misses the cut, their Round 3 & 4 scores are replaced with the <strong style={{ color: "#f87171" }}>worst</strong> Round 3 / Round 4 scores among all golfers selected by anyone in the game who made the cut.</div>
+            {/* Scoring rules */}
+            <div style={S.infoBox}>
+              <div style={S.infoTitle}>📐 HOW SCORING WORKS</div>
+              <div style={S.infoRow}>Each player picks 1 golfer from each of the 5 groups (based on betting odds tiers).</div>
+              <div style={S.infoRow}>Your score = the sum of all 5 golfers' scores vs par (Royal Birkdale par 70).</div>
+              <div style={S.infoRow}>Lowest score wins — most under par wins!</div>
+              <div style={S.infoRow}>If one of your golfers misses the cut, their Round 3 & 4 scores are replaced with the <strong style={{ color: "#f87171" }}>worst</strong> Round 3 / Round 4 scores vs par among all golfers selected by anyone in the game who made the cut.</div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
+
+        {/* ── ALL GOLFERS TAB ── */}
+        {tab === "allgolfers" && (
+          <>
+            <div style={{ ...S.sectionTitle, paddingTop: 12 }}>⛳ ALL GOLFERS</div>
+            <div style={S.sectionSub}>
+              <span style={{ marginRight: 16 }}>R1</span>
+              <span style={{ marginRight: 16 }}>R2</span>
+              <span style={{ marginRight: 16 }}>R3</span>
+              <span style={{ marginRight: 16 }}>R4</span>
+              <span>TOT</span>
+            </div>
+            {allGolfersSorted.map((g, i) => {
+              const cut = g.madeCut === false
+              return (
+                <div key={g.name} style={S.allGolferRow}>
+                  <span style={{ fontSize: 11, color: "#64748b", minWidth: 20, marginRight: 6 }}>#{i + 1}</span>
+                  <span style={{ ...S.allGolferName, color: cut ? "#f87171" : "#e2e8f0", textDecoration: cut ? "line-through" : "none" }}>{g.name}</span>
+                  {cut && <span style={{ fontSize: 10, color: "#f87171", marginRight: 6 }}>CUT</span>}
+                  {[1,2,3,4].map(r => {
+                    const rs = g.score ? g.score[`r${r}`] : null
+                    const vp = rs != null ? rs - PAR : null
+                    return <span key={r} style={{ ...S.allGolferRound, color: scoreColor(vp) }}>{vp != null ? formatVsPar(vp) : "–"}</span>
+                  })}
+                  <span style={{ ...S.allGolferTotal, color: scoreColor(g.total) }}>{g.total != null ? formatVsPar(g.total) : "–"}</span>
+                </div>
+              )
+            })}
+          </>
+        )}
+
+        {/* ── MY PICKS TAB ── */}
+        {tab === "mypicks" && myName && (
+          <>
+            <div style={{ ...S.sectionTitle, paddingTop: 12 }}>👤 {myName.toUpperCase()}'S PICKS</div>
+            {(() => {
+              const myData = allPlayers.find(p => p.name === myName)
+              const myPicksArr = myData ? JSON.parse(myData.picks || "[]") : []
+              const myTotal = playerTotalVsPar(myPicksArr, scores, allPlayers)
+              return (
+                <>
+                  <div style={{ ...S.card, marginBottom: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <span style={{ fontSize: 13, color: "#86a08f" }}>Your total vs par</span>
+                      <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, color: scoreColor(myTotal) }}>{myTotal !== null ? formatVsPar(myTotal) : "–"}</span>
+                    </div>
+                    {myPicksArr.map((name, i) => {
+                      const s = scores[name]
+                      const vp = golferVsPar(s)
+                      const cut = s && !s.made_cut
+                      return (
+                        <div key={name} style={S.golferLine}>
+                          <span style={{ fontSize: 10, color: "#64748b", marginRight: 6 }}>G{i + 1}</span>
+                          <span style={{ ...S.golferLineName, ...(cut ? S.golferLineCut : {}) }}>{name}</span>
+                          {cut && <span style={S.cutBadge}>✂ CUT</span>}
+                          {s && (
+                            <span style={{ display: "flex", gap: 6, marginRight: 8 }}>
+                              {[1,2,3,4].map(r => {
+                                const rs = s[`r${r}`]
+                                const rvp = rs != null ? rs - PAR : null
+                                return <span key={r} style={{ fontSize: 11, color: scoreColor(rvp), minWidth: 22, textAlign: "center" }}>{rvp != null ? formatVsPar(rvp) : "–"}</span>
+                              })}
+                            </span>
+                          )}
+                          <span style={{ ...S.golferLineScore, color: scoreColor(vp) }}>{vp !== null ? formatVsPar(vp) : "–"}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {!locked && (
+                    <button style={S.btnPrimary} onClick={openPicksScreen}>✏️ Edit My Picks</button>
+                  )}
+                  {locked && <div style={{ ...S.card, textAlign: "center", color: "#f59e0b" }}>🔒 Picks locked — tournament underway</div>}
+                  <div style={{ marginTop: 12, textAlign: "center" }}>
+                    <button style={S.btnSmall} onClick={() => { setMyName(""); localStorage.removeItem("open2026_name") }}>Switch Player</button>
+                  </div>
+                </>
+              )
+            })()}
+          </>
+        )}
+
+      </div>
       <Toast msg={toast} />
     </div>
   )
