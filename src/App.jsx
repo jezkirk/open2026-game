@@ -330,10 +330,8 @@ export default function App() {
       <div style={S.navTabs}>
         <button style={{ ...S.navTab, ...(tab === "leaderboard" ? S.navTabActive : {}) }} onClick={() => setTab("leaderboard")}>🏆 Leaderboard</button>
         <button style={{ ...S.navTab, ...(tab === "allgolfers" ? S.navTabActive : {}) }} onClick={() => setTab("allgolfers")}>⛳ All Golfers</button>
-        {myName
-          ? <button style={{ ...S.navTab, ...(tab === "mypicks" ? S.navTabActive : {}) }} onClick={() => setTab("mypicks")}>👤 {myName}</button>
-          : <button style={{ ...S.navTab, ...(tab === "register" ? S.navTabActive : {}) }} onClick={() => setTab("register")}>✏️ Register</button>
-        }
+        {myName && <button style={{ ...S.navTab, ...(tab === "mypicks" ? S.navTabActive : {}) }} onClick={() => setTab("mypicks")}>👤 {myName}</button>}
+        <button style={{ ...S.navTab, ...(tab === "register" || tab === "picks" ? S.navTabActive : {}) }} onClick={() => { if (myName) { openPicksScreen() } else { setTab("register") } }}>✏️ {locked ? "🔒 Picks Locked" : "Change Picks"}</button>
       </div>
 
       <div style={{ padding: "0 20px" }}>
@@ -358,18 +356,20 @@ export default function App() {
                     <div style={S.totalLabel}>total</div>
                   </div>
                 </div>
-                {player.picks.map(name => {
-                  const s = scores[name]
-                  const vp = golferVsPar(s)
-                  const cut = s && !s.made_cut
-                  return (
-                    <div key={name} style={S.golferLine}>
-                      <span style={{ ...S.golferLineName, ...(cut ? S.golferLineCut : {}) }}>{name}</span>
-                      {cut && <span style={S.cutBadge}>✂ CUT</span>}
-                      <span style={{ ...S.golferLineScore, color: scoreColor(vp) }}>{vp !== null ? formatVsPar(vp) : "–"}</span>
-                    </div>
-                  )
-                })}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", paddingTop: 8, borderTop: "1px solid #1e3a2a" }}>
+                  {player.picks.map(name => {
+                    const s = scores[name]
+                    const vp = golferVsPar(s)
+                    const cut = s && !s.made_cut
+                    return (
+                      <span key={name} style={{ fontSize: 12, color: "#94a3b8" }}>
+                        <span style={{ textDecoration: cut ? "line-through" : "none", opacity: cut ? 0.6 : 1 }}>{name.split(" ").pop()}</span>
+                        {" "}
+                        <span style={{ fontWeight: 700, color: scoreColor(vp) }}>{vp !== null ? formatVsPar(vp) : "–"}</span>
+                      </span>
+                    )
+                  })}
+                </div>
               </div>
             ))}
 
