@@ -394,29 +394,50 @@ export default function App() {
         {tab === "allgolfers" && (
           <>
             <div style={{ ...S.sectionTitle, paddingTop: 12 }}>⛳ ALL GOLFERS</div>
-            <div style={S.sectionSub}>
-              <span style={{ marginRight: 16 }}>R1</span>
-              <span style={{ marginRight: 16 }}>R2</span>
-              <span style={{ marginRight: 16 }}>R3</span>
-              <span style={{ marginRight: 16 }}>R4</span>
-              <span>TOT</span>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingRight: 4, marginBottom: 8 }}>
+              {["R1","R2","R3","R4","TOT"].map(l => (
+                <span key={l} style={{ minWidth: l === "TOT" ? 32 : 22, textAlign: "center", fontSize: 11, color: "#64748b" }}>{l}</span>
+              ))}
             </div>
-            {allGolfersSorted.map((g, i) => {
-              const cut = g.madeCut === false
+            {GROUPS.map(group => {
+              const groupGolfers = group.golfers
+                .map(name => {
+                  const score = scores[name]
+                  const total = golferVsPar(score)
+                  return { name, score, total, madeCut: score?.made_cut ?? null }
+                })
+                .sort((a, b) => {
+                  if (a.total === null && b.total === null) return 0
+                  if (a.total === null) return 1
+                  if (b.total === null) return -1
+                  return a.total - b.total
+                })
               return (
-                <div key={g.name} style={S.allGolferRow}>
-                  <span style={{ fontSize: 11, color: "#64748b", minWidth: 20, marginRight: 6 }}>#{i + 1}</span>
-                  <span style={{ ...S.allGolferName, color: cut ? "#f87171" : "#e2e8f0", textDecoration: cut ? "line-through" : "none" }}>{g.name}</span>
-                  {cut && <span style={{ fontSize: 10, color: "#f87171", marginRight: 6 }}>CUT</span>}
-                  {[1,2,3,4].map(r => {
-                    const rs = g.score ? g.score[`r${r}`] : null
-                    const vp = rs != null ? rs - PAR : null
-                    return <span key={r} style={{ ...S.allGolferRound, color: scoreColor(vp) }}>{vp != null ? formatVsPar(vp) : "–"}</span>
+                <div key={group.id} style={{ marginBottom: 16 }}>
+                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 1, color: "#4ade80", padding: "6px 0 4px", borderBottom: "1px solid #1e3a2a", marginBottom: 4 }}>
+                    {group.name}
+                  </div>
+                  {groupGolfers.map(g => {
+                    const cut = g.madeCut === false
+                    return (
+                      <div key={g.name} style={S.allGolferRow}>
+                        <span style={{ ...S.allGolferName, color: cut ? "#f87171" : "#e2e8f0", textDecoration: cut ? "line-through" : "none" }}>{g.name}</span>
+                        {cut && <span style={{ fontSize: 10, color: "#f87171", marginRight: 4 }}>CUT</span>}
+                        {[1,2,3,4].map(r => {
+                          const rs = g.score ? g.score[`r${r}`] : null
+                          const vp = rs != null ? rs - PAR : null
+                          return <span key={r} style={{ ...S.allGolferRound, color: scoreColor(vp) }}>{vp != null ? formatVsPar(vp) : "–"}</span>
+                        })}
+                        <span style={{ ...S.allGolferTotal, color: scoreColor(g.total) }}>{g.total != null ? formatVsPar(g.total) : "–"}</span>
+                      </div>
+                    )
                   })}
-                  <span style={{ ...S.allGolferTotal, color: scoreColor(g.total) }}>{g.total != null ? formatVsPar(g.total) : "–"}</span>
                 </div>
               )
             })}
+            <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
+              <button style={S.btnSmall} onClick={() => setTab("leaderboard")}>← Back</button>
+            </div>
           </>
         )}
 
