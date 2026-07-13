@@ -266,10 +266,9 @@ export default function App() {
     return (
       <div style={S.root}>
         <GS />
-        <div style={S.hero}>
-          <span style={S.heroIcon}>⛳</span>
-          <h2 style={S.pageTitle}>{isEditing ? "EDIT YOUR PICKS" : "REGISTER & PICK"}</h2>
-          <p style={S.subtitle}>{TOURNAMENT.name} · {TOURNAMENT.venue}</p>
+        <div style={{ textAlign: "center", padding: "16px 20px 12px", borderBottom: "1px solid #1e3a2a", background: "linear-gradient(135deg, #0f1a0f 0%, #0a1a2e 50%, #1a0f0a 100%)" }}>
+          <img src="/logo.png" alt="The Open Championship 2026" style={{ maxHeight: 70, objectFit: "contain" }} />
+          <h2 style={{ ...S.pageTitle, marginTop: 8 }}>{isEditing ? "EDIT YOUR PICKS" : "REGISTER & PICK"}</h2>
         </div>
         <div style={{ ...S.section, paddingTop: 20 }}>
           {!isEditing && (
@@ -320,10 +319,8 @@ export default function App() {
   return (
     <div style={S.root}>
       <GS />
-      <div style={S.hero}>
-        <span style={S.heroIcon}>⛳</span>
-        <h1 style={S.title}>THE OPEN<br /><span style={S.titleAccent}>2026</span></h1>
-        <p style={S.subtitle}>ROYAL BIRKDALE · JULY 16–19</p>
+      <div style={{ textAlign: "center", padding: "20px 20px 16px", borderBottom: "1px solid #1e3a2a", background: "linear-gradient(135deg, #0f1a0f 0%, #0a1a2e 50%, #1a0f0a 100%)" }}>
+        <img src="/logo.png" alt="The Open Championship 2026" style={{ maxWidth: "100%", height: "auto", maxHeight: 120, objectFit: "contain" }} />
       </div>
 
       {/* Nav tabs */}
