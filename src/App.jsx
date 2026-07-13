@@ -328,7 +328,7 @@ export default function App() {
         <button style={{ ...S.navTab, ...(tab === "leaderboard" ? S.navTabActive : {}) }} onClick={() => setTab("leaderboard")}>🏆 Leaderboard</button>
         <button style={{ ...S.navTab, ...(tab === "allgolfers" ? S.navTabActive : {}) }} onClick={() => setTab("allgolfers")}>⛳ All Golfers</button>
         {myName && <button style={{ ...S.navTab, ...(tab === "mypicks" ? S.navTabActive : {}) }} onClick={() => setTab("mypicks")}>👤 {myName}</button>}
-        <button style={{ ...S.navTab, ...(tab === "register" || tab === "picks" ? S.navTabActive : {}) }} onClick={() => { if (myName) { openPicksScreen() } else { setTab("register") } }}>✏️ {locked ? "🔒 Picks Locked" : "Change Picks"}</button>
+        <button style={{ ...S.navTab, ...(tab === "register" || tab === "picks" ? S.navTabActive : {}) }} onClick={() => { if (myName) { openPicksScreen() } else { setTab("register") } }}>✏️ {locked ? "🔒 Picks Locked" : myName ? "Change Picks" : "Register"}</button>
       </div>
 
       <div style={{ padding: "0 20px" }}>
