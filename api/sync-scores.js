@@ -51,23 +51,14 @@ export default async function handler(req, res) {
     const data = await response.json()
     const leaderboard = data?.results?.leaderboard || []
 
-    // Debug: return first player's raw data to check field names
-    if (leaderboard.length > 0) {
-      const sample = leaderboard[0]
-      return res.status(200).json({ 
-        debug: true,
-        sample,
-        keys: Object.keys(sample),
-        total: leaderboard.length
-      })
-    }
+    let synced = 0
 
     for (const player of leaderboard) {
       const name = player.first_name + ' ' + player.last_name
-      const r1 = unwrapNumber(player.round_one_strokes)
-      const r2 = unwrapNumber(player.round_two_strokes)
-      const r3 = unwrapNumber(player.round_three_strokes)
-      const r4 = unwrapNumber(player.round_four_strokes)
+      const r1 = unwrapNumber(player.round_one_strokes ?? player.round1 ?? player.rounds?.[0]?.strokes ?? player.rounds?.[0]?.score)
+      const r2 = unwrapNumber(player.round_two_strokes ?? player.round2 ?? player.rounds?.[1]?.strokes ?? player.rounds?.[1]?.score)
+      const r3 = unwrapNumber(player.round_three_strokes ?? player.round3 ?? player.rounds?.[2]?.strokes ?? player.rounds?.[2]?.score)
+      const r4 = unwrapNumber(player.round_four_strokes ?? player.round4 ?? player.rounds?.[3]?.strokes ?? player.rounds?.[3]?.score)
       const madeCut = player.status !== 'cut'
 
       const { error } = await supabase.from('golf_scores').upsert(
