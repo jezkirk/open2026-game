@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "./supabase"
 import { GROUPS, ALL_GOLFERS, TOURNAMENT, isPicsLocked } from "./data"
 
-const PAR = 70
+const PAR = 70 // Royal Birkdale
 
 function formatVsPar(n) {
   if (n === null || n === undefined) return "–"
