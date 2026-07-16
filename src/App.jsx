@@ -160,7 +160,8 @@ async function loadScores() {
 
 export default function App() {
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState("leaderboard") // leaderboard | allgolfers | mypicks | register | picks
+  const [tab, setTab] = useState("leaderboard") // leaderboard | allgolfers | mypicks | register | picks | scores
+  const [scoreInputs, setScoreInputs] = useState({})
   const [myName, setMyName] = useState("")
   const [myPicks, setMyPicks] = useState({})
   const [allPlayers, setAllPlayers] = useState([])
@@ -342,6 +343,7 @@ export default function App() {
       <div style={S.navTabs}>
         <button style={{ ...S.navTab, ...(tab === "leaderboard" ? S.navTabActive : {}) }} onClick={() => setTab("leaderboard")}>🏆 Leaderboard</button>
         <button style={{ ...S.navTab, ...(tab === "allgolfers" ? S.navTabActive : {}) }} onClick={() => setTab("allgolfers")}>⛳ All Golfers</button>
+        <button style={{ ...S.navTab, ...(tab === "scores" ? S.navTabActive : {}) }} onClick={() => setTab("scores")}>📝 Scores</button>
         {myName && <button style={{ ...S.navTab, ...(tab === "mypicks" ? S.navTabActive : {}) }} onClick={() => setTab("mypicks")}>👤 {myName}</button>}
         <button style={{ ...S.navTab, ...(tab === "register" || tab === "picks" ? S.navTabActive : {}) }} onClick={() => { if (myName) { openPicksScreen() } else { setTab("register") } }}>✏️ {locked ? "🔒 Picks Locked" : myName ? "Change Picks" : "Register"}</button>
       </div>
@@ -456,7 +458,70 @@ export default function App() {
           </>
         )}
 
-        {/* ── MY PICKS TAB ── */}
+        {/* ── SCORES ENTRY TAB ── */}
+        {tab === "scores" && (
+          <>
+            <div style={{ ...S.sectionTitle, paddingTop: 12 }}>📝 ENTER SCORES</div>
+            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>Enter round scores (total strokes) for each golfer. Par 70.</div>
+            {GROUPS.map(group => (
+              <div key={group.id} style={{ marginBottom: 16 }}>
+                <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 1, color: "#4ade80", padding: "6px 0 4px", borderBottom: "1px solid #1e3a2a", marginBottom: 6 }}>
+                  {group.name}
+                </div>
+                {group.golfers.map(name => {
+                  const s = scores[name] || {}
+                  const inp = scoreInputs[name] || {}
+                  return (
+                    <div key={name} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                      <span style={{ flex: 1, fontSize: 12, color: "#cbd5e1" }}>{name}</span>
+                      {[1,2,3,4].map(r => (
+                        <div key={r} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                          <input
+                            type="number" min="55" max="100"
+                            style={{ width: 36, height: 30, textAlign: "center", background: "#1e293b", border: "1px solid #334155", borderRadius: 4, color: "#fff", fontSize: 13 }}
+                            value={inp[`r${r}`] !== undefined ? inp[`r${r}`] : (s[`r${r}`] ?? "")}
+                            onChange={e => setScoreInputs(prev => ({ ...prev, [name]: { ...prev[name], [`r${r}`]: e.target.value } }))}
+                            placeholder={`R${r}`}
+                          />
+                        </div>
+                      ))}
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                        <select
+                          style={{ width: 44, height: 30, background: "#1e293b", border: "1px solid #334155", borderRadius: 4, color: inp.cut !== undefined ? (inp.cut === "cut" ? "#f87171" : "#4ade80") : (s.made_cut === false ? "#f87171" : "#64748b"), fontSize: 10 }}
+                          value={inp.cut !== undefined ? inp.cut : (s.made_cut === false ? "cut" : "in")}
+                          onChange={e => setScoreInputs(prev => ({ ...prev, [name]: { ...prev[name], cut: e.target.value } }))}>
+                          <option value="in">✓</option>
+                          <option value="cut">✂</option>
+                        </select>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+            <button style={{ ...S.btnPrimary, marginTop: 8, marginBottom: 16 }} onClick={async () => {
+              for (const name of ALL_GOLFERS) {
+                const inp = scoreInputs[name]
+                if (!inp || Object.keys(inp).length === 0) continue
+                const existing = scores[name] || {}
+                await supabase.from("golf_scores").upsert({
+                  golfer_name: name,
+                  r1: inp.r1 !== undefined ? (inp.r1 === "" ? null : parseInt(inp.r1)) : (existing.r1 ?? null),
+                  r2: inp.r2 !== undefined ? (inp.r2 === "" ? null : parseInt(inp.r2)) : (existing.r2 ?? null),
+                  r3: inp.r3 !== undefined ? (inp.r3 === "" ? null : parseInt(inp.r3)) : (existing.r3 ?? null),
+                  r4: inp.r4 !== undefined ? (inp.r4 === "" ? null : parseInt(inp.r4)) : (existing.r4 ?? null),
+                  made_cut: inp.cut !== undefined ? inp.cut !== "cut" : (existing.made_cut ?? true),
+                  updated_at: new Date().toISOString(),
+                }, { onConflict: "golfer_name" })
+              }
+              await refresh()
+              setScoreInputs({})
+              showToast("Scores saved ✓")
+            }}>
+              💾 Save All Scores
+            </button>
+          </>
+        )}
         {tab === "mypicks" && myName && (
           <>
             <div style={{ ...S.sectionTitle, paddingTop: 12 }}>👤 {myName.toUpperCase()}'S PICKS</div>
