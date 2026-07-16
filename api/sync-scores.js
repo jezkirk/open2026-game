@@ -51,7 +51,16 @@ export default async function handler(req, res) {
     const data = await response.json()
     const leaderboard = data?.results?.leaderboard || []
 
-    let synced = 0
+    // Debug: return first player's raw data to check field names
+    if (leaderboard.length > 0) {
+      const sample = leaderboard[0]
+      return res.status(200).json({ 
+        debug: true,
+        sample,
+        keys: Object.keys(sample),
+        total: leaderboard.length
+      })
+    }
 
     for (const player of leaderboard) {
       const name = player.first_name + ' ' + player.last_name
