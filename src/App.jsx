@@ -185,9 +185,26 @@ export default function App() {
       const saved = localStorage.getItem("open2026_name")
       if (saved) setMyName(saved)
       setLoading(false)
+      // Auto-sync scores on app open
+      handleSyncSilent()
     }
     init()
+
+    // Auto-refresh scores every 15 minutes while app is open
+    const interval = setInterval(() => {
+      handleSyncSilent()
+    }, 15 * 60 * 1000)
+
+    return () => clearInterval(interval)
   }, [])
+
+  async function handleSyncSilent() {
+    try {
+      const res = await fetch("/api/sync-scores")
+      const data = await res.json()
+      if (data.synced > 0) await refresh()
+    } catch { /* silent fail */ }
+  }
 
   async function handleSync() {
     setSyncing(true)
