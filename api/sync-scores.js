@@ -32,8 +32,26 @@ export default async function handler(req, res) {
   const supabase = createClient(supabaseUrl, supabaseKey)
 
   try {
+    // First find The Open Championship 2026 tournament ID
+    let tournamentId = 832 // fallback
+    try {
+      const fixturesRes = await fetch(
+        'https://golf-leaderboard-data.p.rapidapi.com/fixtures/2026',
+        { headers: { 'x-rapidapi-host': 'golf-leaderboard-data.p.rapidapi.com', 'x-rapidapi-key': rapidApiKey } }
+      )
+      if (fixturesRes.ok) {
+        const fixturesData = await fixturesRes.json()
+        const fixtures = fixturesData?.results?.fixtures || fixturesData?.results || []
+        const openTourney = fixtures.find(f => {
+          const name = (f.name || f.tournament_name || '').toLowerCase()
+          return name.includes('open championship') || name.includes('british open') || name.includes('the open')
+        })
+        if (openTourney) tournamentId = openTourney.id || openTourney.tournament_id || tournamentId
+      }
+    } catch { /* use fallback ID */ }
+
     const response = await fetch(
-      'https://golf-leaderboard-data.p.rapidapi.com/leaderboard/832',
+      `https://golf-leaderboard-data.p.rapidapi.com/leaderboard/${tournamentId}`,
       {
         headers: {
           'x-rapidapi-host': 'golf-leaderboard-data.p.rapidapi.com',
@@ -55,10 +73,11 @@ export default async function handler(req, res) {
 
     for (const player of leaderboard) {
       const name = player.first_name + ' ' + player.last_name
-      const r1 = unwrapNumber(player.round_one_strokes ?? player.round1 ?? player.rounds?.[0]?.strokes ?? player.rounds?.[0]?.score)
-      const r2 = unwrapNumber(player.round_two_strokes ?? player.round2 ?? player.rounds?.[1]?.strokes ?? player.rounds?.[1]?.score)
-      const r3 = unwrapNumber(player.round_three_strokes ?? player.round3 ?? player.rounds?.[2]?.strokes ?? player.rounds?.[2]?.score)
-      const r4 = unwrapNumber(player.round_four_strokes ?? player.round4 ?? player.rounds?.[3]?.strokes ?? player.rounds?.[3]?.score)
+      const rounds = player.rounds || []
+      const r1 = rounds[0]?.strokes ? parseInt(rounds[0].strokes) : null
+      const r2 = rounds[1]?.strokes ? parseInt(rounds[1].strokes) : null
+      const r3 = rounds[2]?.strokes ? parseInt(rounds[2].strokes) : null
+      const r4 = rounds[3]?.strokes ? parseInt(rounds[3].strokes) : null
       const madeCut = player.status !== 'cut'
 
       const { error } = await supabase.from('golf_scores').upsert(
@@ -74,7 +93,7 @@ export default async function handler(req, res) {
       if (!error) synced++
     }
 
-    return res.status(200).json({ synced, timestamp: new Date().toISOString() })
+    return res.status(200).json({ synced, tournamentId, timestamp: new Date().toISOString() })
   } catch (err) {
     return res.status(200).json({ error: err.message })
   }
