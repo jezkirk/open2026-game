@@ -58,23 +58,21 @@ export default async function handler(req, res) {
       const lastName = athlete.lastName || athlete.displayName?.split(' ').slice(1).join(' ') || ''
       const name = normaliseName(firstName, lastName)
 
-      // ESPN linescores return vs-par values (e.g. -4, +2, 0 for even par)
-      // Store directly as vs-par — DO NOT subtract PAR in the app
-      const currentRound = parseInt(data?.events?.[0]?.competitions?.[0]?.status?.period || 1)
-
-      function parseRound(linescore, roundNum) {
+      // ESPN linescores return total strokes per round (e.g. 68, 71)
+      // Only store a round if it has a valid score (>= 60 strokes)
+      // This prevents storing 0 for rounds not yet started
+      function parseRound(linescore) {
         if (!linescore || linescore.value == null) return null
-        if (roundNum > currentRound) return null // round not started yet
-        const val = parseFloat(linescore.value)
-        if (isNaN(val)) return null
-        return val // vs-par e.g. -4, 0 (even), +2
+        const val = parseInt(linescore.value)
+        if (!val || val < 60) return null // 0 or unrealistic = not played
+        return val // raw strokes e.g. 68, 71
       }
 
       const linescores = comp.linescores || []
-      const r1 = parseRound(linescores[0], 1)
-      const r2 = parseRound(linescores[1], 2)
-      const r3 = parseRound(linescores[2], 3)
-      const r4 = parseRound(linescores[3], 4)
+      const r1 = parseRound(linescores[0])
+      const r2 = parseRound(linescores[1])
+      const r3 = parseRound(linescores[2])
+      const r4 = parseRound(linescores[3])
 
       // Cut status
       const status = comp.status?.type?.name || ''
