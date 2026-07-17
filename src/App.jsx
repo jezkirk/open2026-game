@@ -362,7 +362,8 @@ export default function App() {
                     const cut = s && !s.made_cut
                     return (
                       <span key={name} style={{ fontSize: 12, color: "#94a3b8" }}>
-                        <span style={{ textDecoration: cut ? "line-through" : "none", opacity: cut ? 0.6 : 1 }}>{name.split(" ").pop()}</span>
+                        <span style={{ textDecoration: cut ? "line-through" : "none", opacity: cut ? 0.5 : 1 }}>{name.split(" ").pop()}</span>
+                        {cut && <span style={{ fontSize: 10, color: "#f87171", marginLeft: 2 }}>✂</span>}
                         {" "}
                         <span style={{ fontWeight: 700, color: scoreColor(vp) }}>{vp !== null ? formatVsPar(vp) : "–"}</span>
                       </span>
@@ -448,12 +449,14 @@ export default function App() {
           <>
             <div style={{ ...S.sectionTitle, paddingTop: 12 }}>📝 ENTER SCORES</div>
             <div style={{ fontSize: 12, color: "#64748b", marginBottom: 12 }}>Enter round scores (total strokes) for each golfer. Par 70.</div>
-            {GROUPS.map(group => (
+            {GROUPS.map(group => {
+              const sortedGolfers = [...group.golfers].sort((a, b) => a.split(' ').pop().localeCompare(b.split(' ').pop()))
+              return (
               <div key={group.id} style={{ marginBottom: 16 }}>
                 <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: 1, color: "#4ade80", padding: "6px 0 4px", borderBottom: "1px solid #1e3a2a", marginBottom: 6 }}>
                   {group.name}
                 </div>
-                {group.golfers.map(name => {
+                {sortedGolfers.map(name => {
                   const s = scores[name] || {}
                   const inp = scoreInputs[name] || {}
                   return (
@@ -483,7 +486,8 @@ export default function App() {
                   )
                 })}
               </div>
-            ))}
+              )
+            })}
             <button style={{ ...S.btnPrimary, marginTop: 8, marginBottom: 16 }} onClick={async () => {
               for (const name of ALL_GOLFERS) {
                 const inp = scoreInputs[name]
