@@ -58,18 +58,16 @@ export default async function handler(req, res) {
       const lastName = athlete.lastName || athlete.displayName?.split(' ').slice(1).join(' ') || ''
       const name = normaliseName(firstName, lastName)
 
-      // ESPN linescores return vs-par values (e.g. -4, +2)
-      // Store as vs-par directly — app will display without subtracting PAR
+      // ESPN linescores return vs-par values (e.g. -4, +2, 0 for even par)
+      // Store directly as vs-par — DO NOT subtract PAR in the app
       const currentRound = parseInt(data?.events?.[0]?.competitions?.[0]?.status?.period || 1)
 
       function parseRound(linescore, roundNum) {
         if (!linescore || linescore.value == null) return null
-        if (roundNum > currentRound) return null
+        if (roundNum > currentRound) return null // round not started yet
         const val = parseFloat(linescore.value)
-        // ESPN uses 0 for even par AND for not started — only store 0 if round has started
-        // Use scoringPlay count or just trust currentRound
-        if (val === 0 && roundNum > currentRound) return null
-        return val
+        if (isNaN(val)) return null
+        return val // vs-par e.g. -4, 0 (even), +2
       }
 
       const linescores = comp.linescores || []
