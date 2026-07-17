@@ -360,9 +360,10 @@ export default function App() {
                     const s = scores[name]
                     const vp = golferVsPar(s)
                     const cut = s && !s.made_cut
+                    const displayName = name === "Si Woo Kim" ? "SW Kim" : name === "Tom Kim" ? "T Kim" : name === "Alex Fitzpatrick" ? "A Fitzpatrick" : name === "Matt Fitzpatrick" ? "M Fitzpatrick" : name.split(" ").pop()
                     return (
                       <span key={name} style={{ fontSize: 12, color: "#94a3b8" }}>
-                        <span style={{ textDecoration: cut ? "line-through" : "none", opacity: cut ? 0.5 : 1 }}>{name.split(" ").pop()}</span>
+                        <span style={{ textDecoration: cut ? "line-through" : "none", opacity: cut ? 0.5 : 1 }}>{displayName}</span>
                         {cut && <span style={{ fontSize: 10, color: "#f87171", marginLeft: 2 }}>✂</span>}
                         {" "}
                         <span style={{ fontWeight: 700, color: scoreColor(vp) }}>{vp !== null ? formatVsPar(vp) : "–"}</span>
