@@ -58,18 +58,16 @@ export default async function handler(req, res) {
       const lastName = athlete.lastName || athlete.displayName?.split(' ').slice(1).join(' ') || ''
       const name = normaliseName(firstName, lastName)
 
-      // Round scores — ESPN linescores return vs-par values (e.g. -4, +2, 0)
-      // We need to convert to raw strokes (add PAR 70) for storage
-      // Treat 0 as null only if the round hasn't been played yet
-      const PAR = 70
+      // Round scores — ESPN linescores return raw strokes (e.g. 68, 71)
+      // Store directly, app subtracts PAR 70 for display
       const currentRound = parseInt(data?.events?.[0]?.competitions?.[0]?.status?.period || 1)
-      
+
       function parseRound(linescore, roundNum) {
         if (!linescore || linescore.value == null) return null
         if (roundNum > currentRound) return null // round not started
         const val = parseInt(linescore.value)
-        if (val === 0 && roundNum === currentRound && comp.statistics?.find(s => s.name === 'holesPlayed')?.displayValue === '0') return null
-        return val + PAR // convert vs-par to strokes
+        if (val === 0) return null // 0 means not played
+        return val
       }
 
       const linescores = comp.linescores || []
