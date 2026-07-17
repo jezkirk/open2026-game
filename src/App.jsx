@@ -14,7 +14,7 @@ function golferVsPar(score) {
   if (!score) return null
   const rounds = [score.r1, score.r2, score.r3, score.r4].filter(r => r != null)
   if (rounds.length === 0) return null
-  return rounds.reduce((a, b) => a + b, 0)
+  return rounds.reduce((a, b) => a + b, 0) - (PAR * rounds.length)
 }
 
 function getWorstRoundVsPar(allPlayers, scores, round) {
@@ -26,7 +26,8 @@ function getWorstRoundVsPar(allPlayers, scores, round) {
       if (!s || !s.made_cut) return
       const r = s[`r${round}`]
       if (r != null) {
-        if (worst === null || r > worst) worst = r
+        const vp = r - PAR
+        if (worst === null || vp > worst) worst = vp
       }
     })
   })
@@ -43,15 +44,15 @@ function playerTotalVsPar(picks, scores, allPlayers) {
     const completedRounds = [s.r1, s.r2, s.r3, s.r4].filter(r => r != null).length
     if (completedRounds === 0) return
     if (total === null) total = 0
-    if (s.r1 != null) total += s.r1
-    if (completedRounds >= 2 && s.r2 != null) total += s.r2
+    if (s.r1 != null) total += (s.r1 - PAR)
+    if (completedRounds >= 2 && s.r2 != null) total += (s.r2 - PAR)
     if (completedRounds >= 3) {
       if (!s.made_cut && worstR3vp !== null) total += worstR3vp
-      else if (s.r3 != null) total += s.r3
+      else if (s.r3 != null) total += (s.r3 - PAR)
     }
     if (completedRounds >= 4) {
       if (!s.made_cut && worstR4vp !== null) total += worstR4vp
-      else if (s.r4 != null) total += s.r4
+      else if (s.r4 != null) total += (s.r4 - PAR)
     }
   })
   return total
@@ -441,7 +442,7 @@ export default function App() {
                         {cut && <span style={{ fontSize: 10, color: "#f87171", marginRight: 4 }}>CUT</span>}
                         {[1,2,3,4].map(r => {
                           const rs = g.score ? g.score[`r${r}`] : null
-                          const vp = rs != null ? rs : null
+                          const vp = rs != null ? rs - PAR : null
                           return <span key={r} style={{ ...S.allGolferRound, color: scoreColor(vp) }}>{vp != null ? formatVsPar(vp) : "–"}</span>
                         })}
                         <span style={{ ...S.allGolferTotal, color: scoreColor(g.total) }}>{g.total != null ? formatVsPar(g.total) : "–"}</span>
@@ -548,7 +549,7 @@ export default function App() {
                             <span style={{ display: "flex", gap: 6, marginRight: 8 }}>
                               {[1,2,3,4].map(r => {
                                 const rs = s[`r${r}`]
-                                const rvp = rs != null ? rs : null
+                                const rvp = rs != null ? rs - PAR : null
                                 return <span key={r} style={{ fontSize: 11, color: scoreColor(rvp), minWidth: 22, textAlign: "center" }}>{rvp != null ? formatVsPar(rvp) : "–"}</span>
                               })}
                             </span>
