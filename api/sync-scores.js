@@ -1,100 +1,92 @@
 // api/sync-scores.js
-// Vercel serverless function — fetches live scores from RapidAPI golf leaderboard
-// and saves to Supabase golf_scores table.
+// Fetches live scores from ESPN's free golf API
+// ESPN endpoint: site.api.espn.com/apis/site/v2/sports/golf/leaderboard
 
 import { createClient } from '@supabase/supabase-js'
 
-function unwrapNumber(val) {
-  if (val === null || val === undefined) return null
-  if (typeof val === 'number') return val
-  if (typeof val === 'object') {
-    if ('$numberInt' in val) return parseInt(val.$numberInt)
-    if ('$numberDouble' in val) return parseFloat(val.$numberDouble)
+const OPEN_EVENT_ID = '401580351' // 2026 Open Championship ESPN event ID
+
+function normaliseName(first, last) {
+  // Normalise common name variations
+  const full = `${first} ${last}`.trim()
+  const map = {
+    'Ludvig Aberg': 'Ludvig Åberg',
+    'Rasmus Hojgaard': 'Rasmus Hojgaard',
   }
-  if (typeof val === 'string') {
-    const n = Number(val)
-    return isNaN(n) ? null : n
-  }
-  return null
+  return map[full] || full
 }
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
 
-  const rapidApiKey = process.env.RAPIDAPI_GOLF_KEY
   const supabaseUrl = process.env.VITE_SUPABASE_URL
   const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY
 
-  if (!rapidApiKey || !supabaseUrl || !supabaseKey) {
-    return res.status(200).json({ error: 'Missing env vars' })
+  if (!supabaseUrl || !supabaseKey) {
+    return res.status(200).json({ error: 'Missing Supabase env vars' })
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey)
 
   try {
-    // First find The Open Championship 2026 tournament ID
-    let tournamentId = 832 // fallback
-    try {
-      const fixturesRes = await fetch(
-        'https://golf-leaderboard-data.p.rapidapi.com/fixtures/2026',
-        { headers: { 'x-rapidapi-host': 'golf-leaderboard-data.p.rapidapi.com', 'x-rapidapi-key': rapidApiKey } }
-      )
-      if (fixturesRes.ok) {
-        const fixturesData = await fixturesRes.json()
-        const fixtures = fixturesData?.results?.fixtures || fixturesData?.results || []
-        const openTourney = fixtures.find(f => {
-          const name = (f.name || f.tournament_name || '').toLowerCase()
-          return name.includes('open championship') || name.includes('british open') || name.includes('the open')
-        })
-        if (openTourney) tournamentId = openTourney.id || openTourney.tournament_id || tournamentId
-      }
-    } catch { /* use fallback ID */ }
+    // Try to find The Open Championship event ID if not hardcoded
+    let eventId = OPEN_EVENT_ID
 
     const response = await fetch(
-      `https://golf-leaderboard-data.p.rapidapi.com/leaderboard/${tournamentId}`,
-      {
-        headers: {
-          'x-rapidapi-host': 'golf-leaderboard-data.p.rapidapi.com',
-          'x-rapidapi-key': rapidApiKey,
-          'Content-Type': 'application/json',
-        },
-      }
+      `https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?event=${eventId}`,
+      { headers: { 'Accept': 'application/json' } }
     )
 
     if (!response.ok) {
-      const text = await response.text()
-      return res.status(200).json({ error: `API error: ${text}` })
+      return res.status(200).json({ error: `ESPN API error: ${response.status}`, synced: 0 })
     }
 
     const data = await response.json()
-    const leaderboard = data?.results?.leaderboard || []
+
+    // ESPN structure: data.events[0].competitions[0].competitors
+    const competitors = data?.events?.[0]?.competitions?.[0]?.competitors || []
+
+    if (competitors.length === 0) {
+      return res.status(200).json({ error: 'No competitors found', eventId, synced: 0 })
+    }
 
     let synced = 0
 
-    for (const player of leaderboard) {
-      const name = player.first_name + ' ' + player.last_name
-      const rounds = player.rounds || []
-      const r1 = rounds[0]?.strokes ? parseInt(rounds[0].strokes) : null
-      const r2 = rounds[1]?.strokes ? parseInt(rounds[1].strokes) : null
-      const r3 = rounds[2]?.strokes ? parseInt(rounds[2].strokes) : null
-      const r4 = rounds[3]?.strokes ? parseInt(rounds[3].strokes) : null
-      const madeCut = player.status !== 'cut'
+    for (const comp of competitors) {
+      const athlete = comp.athlete || {}
+      const firstName = athlete.firstName || athlete.displayName?.split(' ')[0] || ''
+      const lastName = athlete.lastName || athlete.displayName?.split(' ').slice(1).join(' ') || ''
+      const name = normaliseName(firstName, lastName)
 
-      const { error } = await supabase.from('golf_scores').upsert(
-        {
-          golfer_name: name,
-          r1, r2, r3, r4,
-          made_cut: madeCut,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'golfer_name' }
-      )
+      // Round scores — ESPN linescores
+      const linescores = comp.linescores || []
+      const r1 = linescores[0]?.value != null ? parseInt(linescores[0].value) : null
+      const r2 = linescores[1]?.value != null ? parseInt(linescores[1].value) : null
+      const r3 = linescores[2]?.value != null ? parseInt(linescores[2].value) : null
+      const r4 = linescores[3]?.value != null ? parseInt(linescores[3].value) : null
+
+      // Cut status
+      const status = comp.status?.type?.name || ''
+      const madeCut = status !== 'cut' && status !== 'WD' && status !== 'MDF'
+
+      const { error } = await supabase.from('golf_scores').upsert({
+        golfer_name: name,
+        r1, r2, r3, r4,
+        made_cut: madeCut,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'golfer_name' })
 
       if (!error) synced++
     }
 
-    return res.status(200).json({ synced, tournamentId, timestamp: new Date().toISOString() })
+    return res.status(200).json({
+      synced,
+      total: competitors.length,
+      eventId,
+      timestamp: new Date().toISOString()
+    })
+
   } catch (err) {
-    return res.status(200).json({ error: err.message })
+    return res.status(200).json({ error: err.message, synced: 0 })
   }
 }
