@@ -180,14 +180,6 @@ export default function App() {
     setScores(sc)
   }
 
-  async function handleSyncSilent() {
-    try {
-      const res = await fetch("/api/sync-scores")
-      const data = await res.json()
-      if (data.synced > 0) await refresh()
-    } catch { /* silent fail */ }
-  }
-
   useEffect(() => {
     async function init() {
       await refresh()
@@ -196,13 +188,6 @@ export default function App() {
       setLoading(false)
     }
     init()
-
-    // Auto-refresh scores every 15 minutes while app is open
-    const interval = setInterval(() => {
-      handleSyncSilent()
-    }, 15 * 60 * 1000)
-
-    return () => clearInterval(interval)
   }, [])
 
   async function handleSync() {
