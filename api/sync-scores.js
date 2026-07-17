@@ -4,7 +4,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const OPEN_EVENT_ID = '401580351' // 2026 Open Championship ESPN event ID
+const OPEN_EVENT_ID = '401811957' // 2026 Open Championship ESPN event ID
 
 function normaliseName(first, last) {
   // Normalise common name variations
