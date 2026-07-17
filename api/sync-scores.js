@@ -58,12 +58,25 @@ export default async function handler(req, res) {
       const lastName = athlete.lastName || athlete.displayName?.split(' ').slice(1).join(' ') || ''
       const name = normaliseName(firstName, lastName)
 
-      // Round scores — ESPN linescores
+      // Round scores — ESPN linescores return vs-par values (e.g. -4, +2, 0)
+      // We need to convert to raw strokes (add PAR 70) for storage
+      // Treat 0 as null only if the round hasn't been played yet
+      const PAR = 70
+      const currentRound = parseInt(data?.events?.[0]?.competitions?.[0]?.status?.period || 1)
+      
+      function parseRound(linescore, roundNum) {
+        if (!linescore || linescore.value == null) return null
+        if (roundNum > currentRound) return null // round not started
+        const val = parseInt(linescore.value)
+        if (val === 0 && roundNum === currentRound && comp.statistics?.find(s => s.name === 'holesPlayed')?.displayValue === '0') return null
+        return val + PAR // convert vs-par to strokes
+      }
+
       const linescores = comp.linescores || []
-      const r1 = linescores[0]?.value != null ? parseInt(linescores[0].value) : null
-      const r2 = linescores[1]?.value != null ? parseInt(linescores[1].value) : null
-      const r3 = linescores[2]?.value != null ? parseInt(linescores[2].value) : null
-      const r4 = linescores[3]?.value != null ? parseInt(linescores[3].value) : null
+      const r1 = parseRound(linescores[0], 1)
+      const r2 = parseRound(linescores[1], 2)
+      const r3 = parseRound(linescores[2], 3)
+      const r4 = parseRound(linescores[3], 4)
 
       // Cut status
       const status = comp.status?.type?.name || ''
