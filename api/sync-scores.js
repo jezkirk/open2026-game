@@ -11,7 +11,13 @@ function normaliseName(first, last) {
   const full = `${first} ${last}`.trim()
   const map = {
     'Ludvig Aberg': 'Ludvig Åberg',
+    'Rasmus Højgaard': 'Rasmus Hojgaard',
     'Rasmus Hojgaard': 'Rasmus Hojgaard',
+    'Joaquín Niemann': 'Joaquin Niemann',
+    'Joaquin Niemann': 'Joaquin Niemann',
+    'Si Woo Kim': 'Si Woo Kim',
+    'Siwoo Kim': 'Si Woo Kim',
+    'Si-Woo Kim': 'Si Woo Kim',
   }
   return map[full] || full
 }
