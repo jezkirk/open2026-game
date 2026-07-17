@@ -70,8 +70,6 @@ export const GROUPS = [
       "Keegan Bradley",
       "Cameron Smith",
       "Si Woo Kim",
-      "Tony Finau",
-      "Danny Willett",
     ],
   },
 ]
