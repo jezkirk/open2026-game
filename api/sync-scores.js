@@ -61,14 +61,21 @@ export default async function handler(req, res) {
       return res.status(200).json({ error: 'No competitors found', synced: 0 })
     }
 
-    // Debug: sample status fields from first competitor
-    const sample = competitors[0]
+    // Debug: find status for known cut players
+    const cutSample = competitors.find(c => {
+      const name = normaliseName(
+        c.athlete?.firstName || '',
+        c.athlete?.lastName || ''
+      )
+      return name === 'Justin Rose' || name === 'Jordan Spieth'
+    })
     const sampleStatus = {
-      statusTypeName: sample?.status?.type?.name,
-      statusTypeDesc: sample?.status?.type?.description,
-      statusTypeId: sample?.status?.type?.id,
-      statusKeys: Object.keys(sample?.status || {}),
-      statusTypeKeys: Object.keys(sample?.status?.type || {}),
+      firstCompStatus: competitors[0]?.status?.type?.name,
+      cutPlayerName: cutSample ? normaliseName(cutSample.athlete?.firstName || '', cutSample.athlete?.lastName || '') : 'not found',
+      cutPlayerStatus: cutSample?.status?.type?.name,
+      cutPlayerStatusDesc: cutSample?.status?.type?.description,
+      cutPlayerStatusState: cutSample?.status?.type?.state,
+      cutPlayerDetail: cutSample?.status?.detail,
     }
 
     let synced = 0
