@@ -1,10 +1,9 @@
 // api/sync-scores.js
 // Fetches live scores from ESPN's free golf API
-// ESPN endpoint: site.api.espn.com/apis/site/v2/sports/golf/leaderboard
 
 import { createClient } from '@supabase/supabase-js'
 
-const OPEN_EVENT_ID = '401811957' // 2026 Open Championship ESPN event ID
+const OPEN_EVENT_ID = '401811957'
 
 const SELECTED_GOLFERS = new Set([
   'Scottie Scheffler','Rory McIlroy','Tommy Fleetwood','Matt Fitzpatrick','Jon Rahm','Xander Schauffele','Tyrrell Hatton',
@@ -13,19 +12,24 @@ const SELECTED_GOLFERS = new Set([
   'Brooks Koepka','Tom Kim','Joaquin Niemann','Russell Henley','Brian Harman','Sepp Straka','Alex Fitzpatrick',
   'Rasmus Hojgaard','Justin Thomas','Keegan Bradley','Cameron Smith','Si Woo Kim',
 ])
-  // Normalise common name variations
+
+function normaliseName(first, last) {
   const full = `${first} ${last}`.trim()
   const map = {
     'Ludvig Aberg': 'Ludvig Åberg',
     'Rasmus Højgaard': 'Rasmus Hojgaard',
-    'Rasmus Hojgaard': 'Rasmus Hojgaard',
     'Joaquín Niemann': 'Joaquin Niemann',
-    'Joaquin Niemann': 'Joaquin Niemann',
-    'Si Woo Kim': 'Si Woo Kim',
     'Siwoo Kim': 'Si Woo Kim',
     'Si-Woo Kim': 'Si Woo Kim',
   }
   return map[full] || full
+}
+
+function parseRound(linescore) {
+  if (!linescore || linescore.value == null) return null
+  const val = parseInt(linescore.value)
+  if (!val || val < 60) return null
+  return val
 }
 
 export default async function handler(req, res) {
@@ -41,11 +45,8 @@ export default async function handler(req, res) {
   const supabase = createClient(supabaseUrl, supabaseKey)
 
   try {
-    // Try to find The Open Championship event ID if not hardcoded
-    let eventId = OPEN_EVENT_ID
-
     const response = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?event=${eventId}`,
+      `https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?event=${OPEN_EVENT_ID}`,
       { headers: { 'Accept': 'application/json' } }
     )
 
@@ -54,12 +55,20 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json()
-
-    // ESPN structure: data.events[0].competitions[0].competitors
     const competitors = data?.events?.[0]?.competitions?.[0]?.competitors || []
 
     if (competitors.length === 0) {
-      return res.status(200).json({ error: 'No competitors found', eventId, synced: 0 })
+      return res.status(200).json({ error: 'No competitors found', synced: 0 })
+    }
+
+    // Debug: sample status fields from first competitor
+    const sample = competitors[0]
+    const sampleStatus = {
+      statusTypeName: sample?.status?.type?.name,
+      statusTypeDesc: sample?.status?.type?.description,
+      statusTypeId: sample?.status?.type?.id,
+      statusKeys: Object.keys(sample?.status || {}),
+      statusTypeKeys: Object.keys(sample?.status?.type || {}),
     }
 
     let synced = 0
@@ -70,18 +79,7 @@ export default async function handler(req, res) {
       const lastName = athlete.lastName || athlete.displayName?.split(' ').slice(1).join(' ') || ''
       const name = normaliseName(firstName, lastName)
 
-      // Only sync golfers in our selected groups
       if (!SELECTED_GOLFERS.has(name)) continue
-
-      // ESPN linescores return total strokes per round (e.g. 68, 71)
-      // Only store a round if it has a valid score (>= 60 strokes)
-      // This prevents storing 0 for rounds not yet started
-      function parseRound(linescore) {
-        if (!linescore || linescore.value == null) return null
-        const val = parseInt(linescore.value)
-        if (!val || val < 60) return null // 0 or unrealistic = not played
-        return val // raw strokes e.g. 68, 71
-      }
 
       const linescores = comp.linescores || []
       const r1 = parseRound(linescores[0])
@@ -89,16 +87,13 @@ export default async function handler(req, res) {
       const r3 = parseRound(linescores[2])
       const r4 = parseRound(linescores[3])
 
-      // Cut status — ESPN uses various status indicators
-      const status = (comp.status?.type?.name || '').toLowerCase()
+      // Cut status
+      const statusName = (comp.status?.type?.name || '').toLowerCase()
       const statusDesc = (comp.status?.type?.description || '').toLowerCase()
-      const statusId = comp.status?.type?.id || ''
-      const madeCut = !status.includes('cut') && 
-                      !statusDesc.includes('cut') && 
-                      status !== 'wd' && 
-                      status !== 'mdf' &&
-                      statusId !== 'C' &&
-                      !(comp.status?.cut === true)
+      const madeCut = !statusName.includes('cut') &&
+                      !statusDesc.includes('cut') &&
+                      statusName !== 'wd' &&
+                      statusName !== 'mdf'
 
       const { error } = await supabase.from('golf_scores').upsert({
         golfer_name: name,
@@ -110,18 +105,9 @@ export default async function handler(req, res) {
       if (!error) synced++
     }
 
-    // Sample first competitor's status for debugging
-    const sampleStatus = competitors[0] ? {
-      statusName: competitors[0].status?.type?.name,
-      statusDesc: competitors[0].status?.type?.description,
-      statusId: competitors[0].status?.type?.id,
-      statusKeys: Object.keys(competitors[0].status || {})
-    } : null
-
     return res.status(200).json({
       synced,
       total: competitors.length,
-      eventId,
       sampleStatus,
       timestamp: new Date().toISOString()
     })
