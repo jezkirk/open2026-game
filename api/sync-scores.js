@@ -6,7 +6,13 @@ import { createClient } from '@supabase/supabase-js'
 
 const OPEN_EVENT_ID = '401811957' // 2026 Open Championship ESPN event ID
 
-function normaliseName(first, last) {
+const SELECTED_GOLFERS = new Set([
+  'Scottie Scheffler','Rory McIlroy','Tommy Fleetwood','Matt Fitzpatrick','Jon Rahm','Xander Schauffele','Tyrrell Hatton',
+  'Cameron Young','Ludvig Åberg','Aaron Rai','Justin Rose','Chris Gotterup','Robert MacIntyre','Collin Morikawa',
+  'Sam Burns','Viktor Hovland','Wyndham Clark','Bryson DeChambeau','Jordan Spieth','Shane Lowry','Patrick Cantlay',
+  'Brooks Koepka','Tom Kim','Joaquin Niemann','Russell Henley','Brian Harman','Sepp Straka','Alex Fitzpatrick',
+  'Rasmus Hojgaard','Justin Thomas','Keegan Bradley','Cameron Smith','Si Woo Kim',
+])
   // Normalise common name variations
   const full = `${first} ${last}`.trim()
   const map = {
@@ -64,6 +70,9 @@ export default async function handler(req, res) {
       const lastName = athlete.lastName || athlete.displayName?.split(' ').slice(1).join(' ') || ''
       const name = normaliseName(firstName, lastName)
 
+      // Only sync golfers in our selected groups
+      if (!SELECTED_GOLFERS.has(name)) continue
+
       // ESPN linescores return total strokes per round (e.g. 68, 71)
       // Only store a round if it has a valid score (>= 60 strokes)
       // This prevents storing 0 for rounds not yet started
@@ -80,9 +89,16 @@ export default async function handler(req, res) {
       const r3 = parseRound(linescores[2])
       const r4 = parseRound(linescores[3])
 
-      // Cut status
-      const status = comp.status?.type?.name || ''
-      const madeCut = status !== 'cut' && status !== 'WD' && status !== 'MDF'
+      // Cut status — ESPN uses various status indicators
+      const status = (comp.status?.type?.name || '').toLowerCase()
+      const statusDesc = (comp.status?.type?.description || '').toLowerCase()
+      const statusId = comp.status?.type?.id || ''
+      const madeCut = !status.includes('cut') && 
+                      !statusDesc.includes('cut') && 
+                      status !== 'wd' && 
+                      status !== 'mdf' &&
+                      statusId !== 'C' &&
+                      !(comp.status?.cut === true)
 
       const { error } = await supabase.from('golf_scores').upsert({
         golfer_name: name,
@@ -94,10 +110,19 @@ export default async function handler(req, res) {
       if (!error) synced++
     }
 
+    // Sample first competitor's status for debugging
+    const sampleStatus = competitors[0] ? {
+      statusName: competitors[0].status?.type?.name,
+      statusDesc: competitors[0].status?.type?.description,
+      statusId: competitors[0].status?.type?.id,
+      statusKeys: Object.keys(competitors[0].status || {})
+    } : null
+
     return res.status(200).json({
       synced,
       total: competitors.length,
       eventId,
+      sampleStatus,
       timestamp: new Date().toISOString()
     })
 
