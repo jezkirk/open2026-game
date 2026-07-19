@@ -47,12 +47,14 @@ function playerTotalVsPar(picks, scores, allPlayers) {
     if (s.r1 != null) total += (s.r1 - PAR)
     if (completedRounds >= 2 && s.r2 != null) total += (s.r2 - PAR)
     if (completedRounds >= 3) {
-      if (!s.made_cut && worstR3vp !== null) total += worstR3vp
-      else if (s.r3 != null) total += (s.r3 - PAR)
+      // Use manually entered R3 if available, otherwise worst-of for cut players
+      if (s.r3 != null) total += (s.r3 - PAR)
+      else if (!s.made_cut && worstR3vp !== null) total += worstR3vp
     }
-    if (completedRounds >= 4) {
-      if (!s.made_cut && worstR4vp !== null) total += worstR4vp
-      else if (s.r4 != null) total += (s.r4 - PAR)
+    if (completedRounds >= 4 || (!s.made_cut && s.r3 != null)) {
+      // Use manually entered R4 if available, otherwise worst-of for cut players
+      if (s.r4 != null) total += (s.r4 - PAR)
+      else if (!s.made_cut && worstR4vp !== null) total += worstR4vp
     }
   })
   return total
