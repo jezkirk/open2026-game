@@ -340,7 +340,17 @@ export default function App() {
         {/* ── LEADERBOARD TAB ── */}
         {tab === "leaderboard" && (
           <>
-            <div style={{ ...S.sectionTitle, paddingTop: 12 }}>🏆 LEADERBOARD</div>
+            {leaderboard.length > 0 && leaderboard[0].total !== null && (
+              <div style={{ background: "linear-gradient(135deg, #14532d, #166534)", border: "2px solid #4ade80", borderRadius: 12, padding: "16px 20px", marginBottom: 16, textAlign: "center" }}>
+                <div style={{ fontSize: 36, marginBottom: 4 }}>🏆</div>
+                <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, color: "#4ade80" }}>WINNER</div>
+                <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 40, letterSpacing: 2, color: "#fff", marginTop: 2 }}>{leaderboard[0].name}</div>
+                <div style={{ fontSize: 14, color: "#86efac", marginTop: 4 }}>🎉 The Open Championship 2026 · Royal Birkdale 🎉</div>
+                <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, color: "#4ade80", marginTop: 8 }}>{formatVsPar(leaderboard[0].total)}</div>
+                <div style={{ fontSize: 11, color: "#86efac", letterSpacing: 2, textTransform: "uppercase" }}>Final Score</div>
+              </div>
+            )}
+            <div style={{ ...S.sectionTitle, paddingTop: 4 }}>🏆 LEADERBOARD</div>
             <div style={S.sectionSub}>Lowest score vs par wins</div>
             {leaderboard.length === 0 && (
               <div style={{ ...S.card, textAlign: "center", color: "#64748b", padding: 32 }}>
@@ -375,15 +385,6 @@ export default function App() {
                 </div>
               </div>
             ))}
-
-            {/* Sync button */}
-            <div style={{ textAlign: "center", marginTop: 8, paddingBottom: 16 }}>
-              <button style={{ ...S.btnSmall, borderColor: syncing ? "#334155" : "#4ade8044", color: syncing ? "#475569" : "#4ade80" }}
-                onClick={handleSync} disabled={syncing}>
-                {syncing ? "⏳ Syncing…" : "🔄 Sync Scores"}
-              </button>
-            </div>
-            {syncMsg && <div style={{ textAlign: "center", fontSize: 12, color: "#4ade80", marginBottom: 12 }}>{syncMsg}</div>}
 
             {/* Scoring rules */}
             <div style={S.infoBox}>
